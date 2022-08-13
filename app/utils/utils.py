@@ -56,5 +56,5 @@ def find_index_of_ending_delimiter(text: str) -> int:
 
 
 def clean_text(text: str) -> str:
-    result = text.replace("\n", "").strip()
+    result = text.replace("\n", "").replace("\xa0", " ").strip()
     return result

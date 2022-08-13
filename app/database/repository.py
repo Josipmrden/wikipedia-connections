@@ -18,8 +18,8 @@ memgraph = Memgraph()
 
 class MemgraphWikiPerson(Node):
     name: str = Field(index=True, exist=True, unique=True, db=memgraph)
-    url: str = Field(index=True, exist=True, unique=True, db=memgraph)
-    birth_date: str = Field(index=True, exist=True, unique=True, db=memgraph)
+    url: Optional[str] = Field(index=True, exist=True, unique=True, db=memgraph)
+    birth_date: Optional[str] = Field(index=True, exist=True, unique=True, db=memgraph)
     death_date: Optional[str] = Field(index=True, exist=True, unique=True, db=memgraph)
 
 
@@ -43,9 +43,15 @@ class MemgraphRepository(Repository):
         first_person = wiki_person_link.from_person
         second_person = wiki_person_link.to_person
 
-        first_ogm_person = MemgraphWikiPerson(name=first_person.name).load()
-        second_ogm_person = MemgraphWikiPerson(name=second_person.name).load()
+        first_ogm_person = MemgraphWikiPerson(name=first_person.name).load(
+            self._memgraph
+        )
+        second_ogm_person = MemgraphWikiPerson(name=second_person.name).load(
+            self._memgraph
+        )
 
         HasConnectionTo(
-            _start_node_id=first_ogm_person._id, _end_node_id=second_ogm_person._id
+            _start_node_id=first_ogm_person._id,
+            _end_node_id=second_ogm_person._id,
+            context=wiki_person_link.context,
         ).save(memgraph)

@@ -8,12 +8,17 @@ from tqdm import tqdm
 
 
 class PersonLinkListener(ABC):
-    def found_connection_group(self, link: str, count: int) -> None:
-        pass
-
     def found_person_connection(
         self, person: PersonDetails, connection: PersonConnection
     ) -> None:
+        pass
+
+
+class ParagraphLinkListener(ABC):
+    def found_paragraph_links(self, link: str, count: int) -> None:
+        pass
+
+    def processed_paragraph_link(self) -> None:
         pass
 
 
@@ -43,12 +48,10 @@ class DBInsertListener(PersonLinkListener):
         self._repository.link_persons(link_between_persons)
 
 
-class ProgressPersonLinkListener(PersonLinkListener):
-    def found_connection_group(self, link: str, count: int) -> None:
+class ProgressParagraphLinkListener(PersonLinkListener):
+    def found_paragraph_links(self, link: str, count: int) -> None:
         self._progress = tqdm(range(count))
-        print(f"Found {count} paragraphs on url {link}")
+        print(f"Found {count} links on url {link}")
 
-    def found_person_connection(
-        self, person: PersonDetails, connection: PersonConnection
-    ) -> None:
+    def processed_paragraph_link(self) -> None:
         self._progress.update(1)
