@@ -16,6 +16,7 @@ class PersonDetails:
     birth_date: str
     death_date: Optional[str]
 
+
 @dataclass
 class PersonConnection:
     connection_person: PersonDetails

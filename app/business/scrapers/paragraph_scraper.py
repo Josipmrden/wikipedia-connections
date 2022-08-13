@@ -1,14 +1,12 @@
 import requests
 import itertools
-from abc import ABC
 from typing import List
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 
-from app.business.listeners import ParagraphLinkListener
 from app.business.models import ParagraphLink
 from app.business.scrapers.common import AbstractWikiScraper
-from app.utils.utils import clean_text, find_begin, find_end, form_sentence
+from app.utils.utils import find_begin, find_end, form_sentence
 
 
 class ParagraphLinkScraper(AbstractWikiScraper):
@@ -17,9 +15,6 @@ class ParagraphLinkScraper(AbstractWikiScraper):
     PARAGRAPH_TAG = "p"
     WIKIPEDIA_PAGE = "https://en.wikipedia.org"
 
-    def __init__(self) -> None:
-        self._listeners: List[ParagraphLinkListener] = []
-
     @property
     def links(self) -> List[ParagraphLink]:
         return self._links
@@ -27,16 +22,6 @@ class ParagraphLinkScraper(AbstractWikiScraper):
     def run(self, link: str) -> None:
         links = self._fetch_paragraph_links(link)
         self._links = links
-
-    def add_listener(self, listener: ParagraphLinkListener) -> None:
-        self._listeners.append(listener)
-
-    def remove_listener(self, listener: ParagraphLinkListener) -> None:
-        self._listeners.remove(listener)
-
-    def found_paragraph_group_content(self, link: str, count: int) -> None:
-        for l in self._listeners:
-            l.found_paragraph_link_group(link, count)
 
     def _fetch_paragraph_links(self, link: str) -> List[ParagraphLink]:
         page = requests.get(link)
@@ -49,8 +34,6 @@ class ParagraphLinkScraper(AbstractWikiScraper):
                 text_content.children,
             )
         )
-
-        self.found_paragraph_group_content(link, len(paragraph_text_content))
 
         links_with_content = list(
             itertools.chain.from_iterable(
@@ -89,9 +72,8 @@ class ParagraphLinkScraper(AbstractWikiScraper):
                 not isinstance(child, str)
                 and child.name == ParagraphLinkScraper.LINK_TAG
             ):
-                paragraph_links.append(
-                    self._create_paragraph_link(child, cleaned_children, i)
-                )
+                paragraph_link = self._create_paragraph_link(child, cleaned_children, i)
+                paragraph_links.append(paragraph_link)
 
         return paragraph_links
 
@@ -100,7 +82,10 @@ class ParagraphLinkScraper(AbstractWikiScraper):
         link_pointer = urljoin(ParagraphLinkScraper.WIKIPEDIA_PAGE, link.attrs["href"])
         context = self._extract_context(context, order)
 
-        return ParagraphLink(text, link_pointer, context)
+        context = context if context.isprintable() else rf"{context}"
+        paragraph_link = ParagraphLink(text, link_pointer, context)
+
+        return paragraph_link
 
     def _extract_context(self, context, order: int) -> str:
         plain_text = list(map(lambda x: x if isinstance(x, str) else x.text, context))

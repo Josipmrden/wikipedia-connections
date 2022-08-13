@@ -1,4 +1,4 @@
-from app.business.listeners import DBInsertListener
+from app.business.listeners import DBInsertListener, ProgressPersonLinkListener
 from app.business.scrapers.wiki_scraper import WikiScraper
 from app.database.repository import MemgraphRepository
 
@@ -11,6 +11,7 @@ def main() -> None:
     link = dummy_url
 
     wiki_scraper.add_listener(DBInsertListener(MemgraphRepository()))
+    wiki_scraper.add_listener(ProgressPersonLinkListener())
 
     wiki_scraper.run(link)
 

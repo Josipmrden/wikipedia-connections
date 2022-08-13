@@ -1,10 +1,9 @@
 import requests
-from abc import ABC
 from typing import List
 from bs4 import BeautifulSoup
 from app.business.exceptions import PersonNotFoundException
 
-from app.business.listeners import PersonLinkListener, ProgressParagraphLinkListener
+from app.business.listeners import PersonLinkListener
 from app.business.models import ParagraphLink, PersonConnection, PersonDetails
 from app.business.scrapers.common import AbstractWikiScraper
 from app.business.scrapers.paragraph_scraper import ParagraphLinkScraper
@@ -16,7 +15,7 @@ class WikiScraper(AbstractWikiScraper):
     WIKIPEDIA_PAGE = "https://en.wikipedia.org"
 
     def __init__(self) -> None:
-        self.listeners: List[PersonLinkListener] = []
+        self._listeners: List[PersonLinkListener] = []
 
     def run(self, link: str) -> None:
         person: PersonDetails = self._fetch_person_details(link)
@@ -31,17 +30,21 @@ class WikiScraper(AbstractWikiScraper):
         for connection in connections:
             self.notify_on_found_person_connection(person, connection)
 
+    def notify_on_found_connection_group(self, link: str, count: int) -> None:
+        for l in self._listeners:
+            l.found_connection_group(link, count)
+
     def notify_on_found_person_connection(
         self, person: PersonDetails, connection: PersonConnection
     ) -> None:
-        for l in self.listeners:
+        for l in self._listeners:
             l.found_person_connection(person, connection)
 
     def add_listener(self, listener: PersonLinkListener) -> None:
-        self.listeners.append(listener)
+        self._listeners.append(listener)
 
     def remove_listener(self, listener: PersonLinkListener) -> None:
-        self.listeners.remove(listener)
+        self._listeners.remove(listener)
 
     def _fetch_person_details(self, link: str):
         page = requests.get(link)
@@ -89,16 +92,16 @@ class WikiScraper(AbstractWikiScraper):
 
     def _fetch_connections(self, link: str) -> List[PersonConnection]:
         paragraphs: List[ParagraphLink] = self._fetch_paragraph_links(link)
+        self.notify_on_found_connection_group(link, len(paragraphs))
+        
         connections: List[PersonConnection] = self._filter_connections(paragraphs)
 
         return connections
 
     def _fetch_paragraph_links(self, link: str) -> List[ParagraphLink]:
         scraper = ParagraphLinkScraper()
-        scraper.add_listener(ProgressParagraphLinkListener())
-
         scraper.run(link)
-        
+
         return scraper.links
 
     def _filter_connections(

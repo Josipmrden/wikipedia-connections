@@ -54,6 +54,7 @@ def find_index_of_ending_delimiter(text: str) -> int:
 
     return -1
 
+
 def clean_text(text: str) -> str:
     result = text.replace("\n", "").strip()
     return result
