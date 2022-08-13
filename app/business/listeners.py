@@ -1,14 +1,21 @@
 from abc import ABC
 
-from app.business.models import PersonConnection, PersonDetails
+from app.business.models import ParagraphLink, PersonConnection, PersonDetails
 from app.database.models import WikiPerson, WikiPersonLink
 from app.database.repository import Repository
 
 
 class PersonLinkListener(ABC):
-    def found_person_link(
+    def found_person_connection(
         self, person: PersonDetails, connection: PersonConnection
     ) -> None:
+        pass
+
+class ParagraphLinkListener(ABC):
+    def found_paragraph_link_group(self, link: str, count: int) -> None:
+        pass
+
+    def completed_paragraph_link(self, paragraph_link: ParagraphLink) -> None:
         pass
 
 
@@ -16,7 +23,7 @@ class DBInsertListener(PersonLinkListener):
     def __init__(self, repository: Repository) -> None:
         self._repository = repository
 
-    def found_person_link(
+    def found_person_connection(
         self, person: PersonDetails, connection: PersonConnection
     ) -> None:
         wiki_person = WikiPerson(
@@ -36,3 +43,10 @@ class DBInsertListener(PersonLinkListener):
         self._repository.save_person(wiki_person)
         self._repository.save_person(connection_person)
         self._repository.link_persons(link_between_persons)
+
+class ProgressParagraphLinkListener(ParagraphLinkListener):
+    def found_paragraph_link_group(self, link: str, count: int) -> None:
+        print(f"Found {count} links on url {link}")
+
+    def completed_paragraph_link(self, paragraph_link: ParagraphLink) -> None:
+        pass

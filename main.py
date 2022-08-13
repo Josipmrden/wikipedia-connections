@@ -1,5 +1,5 @@
 from app.business.listeners import DBInsertListener
-from app.business.scraper import WikiScraper
+from app.business.scrapers.wiki_scraper import WikiScraper
 from app.database.repository import MemgraphRepository
 
 dummy_url: str = "https://en.wikipedia.org/wiki/Michael_Jordan"
