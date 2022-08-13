@@ -93,7 +93,7 @@ class WikiScraper(AbstractWikiScraper):
     def _fetch_connections(self, link: str) -> List[PersonConnection]:
         paragraphs: List[ParagraphLink] = self._fetch_paragraph_links(link)
         self.notify_on_found_connection_group(link, len(paragraphs))
-        
+
         connections: List[PersonConnection] = self._filter_connections(paragraphs)
 
         return connections
